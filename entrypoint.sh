@@ -25,6 +25,8 @@ if [[ "$CAN_REBASE" == "null" ]]; then
 	if [[ "$CAN_REBASE" == "null" ]]; then
 		echo "Cannot rebase PR!"
 		exit 1
+	fi
+fi
 
 
 BASE_REPO=$(echo "$pr_resp" | jq -r .base.repo.full_name)

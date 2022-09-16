@@ -23,7 +23,7 @@ done
 
 if [[ "$CAN_REBASE" != "true" ]] ; then
 	echo "PR cannot rebase!"
-
+fi
 
 BASE_REPO=$(echo "$pr_resp" | jq -r .base.repo.full_name)
 BASE_BRANCH=$(echo "$pr_resp" | jq -r .base.ref)

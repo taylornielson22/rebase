@@ -1,0 +1,13 @@
+name: Automatic Rebase
+maintainer: EIG
+inputs:
+  autosquash:
+    description: Should the rebase autosquash fixup and squash commits
+    required: false
+    default: false
+  pr_number:
+    required: true
+    description: PR number
+runs:
+  using: 'docker'
+  image: 'Dockerfile'

@@ -7,11 +7,12 @@ if [[ -z "$GITHUB_TOKEN" ]]; then
 	exit 1
 fi
 
+AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
 CAN_REBASE=""
 pr_resp=""
 for ((i = 0 ; i < 3 ; i++)); do
-	pr_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "${API_HEADER}" \
-		"${URI}/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
+	pr_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "Accept: application/vnd.github.v3+json" \
+		"https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
 	CAN_REBASE=$(echo "$pr_resp" | jq -r .rebaseable)
 	if [[ "$CAN_REBASE" != "null" ]]; then
 		break
@@ -32,8 +33,8 @@ if [[ "$USER_LOGIN" == "null" ]]; then
 	USER_LOGIN=$(jq -r ".pull_request.user.login" "$GITHUB_EVENT_PATH")
 fi
 
-user_resp=$(curl -X GET -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
-	"${URI}/users/${USER_LOGIN}")
+user_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "Accept: application/vnd.github.v3+json" \
+	"https://api.github.com/users/${USER_LOGIN}")
 
 USER_NAME=$(echo "$user_resp" | jq -r ".name")
 if [[ "$USER_NAME" == "null" ]]; then

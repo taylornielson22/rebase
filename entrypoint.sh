@@ -7,26 +7,21 @@ if [[ -z "$GITHUB_TOKEN" ]]; then
 	exit 1
 fi
 
-if [[ -z "$INPUT_PR_NUMBER" ]]; then
-	echo "Please set the pr_number input variable."
-	exit 1
-fi
-
-pr_resp=$(curl -X GET -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
-		"https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
-CAN_REBASE=$(echo "$pr_resp" | jq -r .rebaseable)
-
-if [[ "$CAN_REBASE" == "null" ]]; then
-	echo "GitHub thinks PR cannot rebase yet, will retry again in 5 seconds"
-	sleep 5
-	pr_resp=$(curl -X GET -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
-		"https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
+CAN_REBASE=""
+pr_resp=""
+for ((i = 0 ; i < 3 ; i++)); do
+	pr_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "${API_HEADER}" \
+		"${URI}/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
 	CAN_REBASE=$(echo "$pr_resp" | jq -r .rebaseable)
-	if [[ "$CAN_REBASE" == "null" ]]; then
-		echo "Cannot rebase PR!"
-		exit 1
+	if [[ "$CAN_REBASE" != "null" ]]; then
+		break
 	fi
-fi
+	echo "PR cannot rebase, retry after 5 seconds"
+	sleep 5
+done
+
+if [[ "$CAN_REBASE" != "true" ]] ; then
+	echo "PR cannot rebase!"
 
 
 BASE_REPO=$(echo "$pr_resp" | jq -r .base.repo.full_name)

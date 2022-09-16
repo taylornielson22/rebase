@@ -97,6 +97,6 @@ fi
 git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 git checkout origin/$BASE_BRANCH
 git fetch origin $HEAD_BRANCH
-git merge $BASE_BRANCH --no-edit
-git push
+git merge origin/$HEAD_BRANCH --no-edit
+git push --force-with-lease origin $BASE_BRANCH
 git status

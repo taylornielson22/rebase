@@ -3,46 +3,39 @@
 set -e
 
 if [[ -z "$GITHUB_TOKEN" ]]; then
-	echo "Set the GITHUB_TOKEN env variable."
+	echo "Please set the GITHUB_TOKEN env variable."
 	exit 1
 fi
 
-URI=https://api.github.com
-API_HEADER="Accept: application/vnd.github.v3+json"
-AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
-
-MAX_RETRIES=${MAX_RETRIES:-6}
-RETRY_INTERVAL=${RETRY_INTERVAL:-10}
-REBASEABLE=""
-pr_resp=""
-for ((i = 0 ; i < $MAX_RETRIES ; i++)); do
-	pr_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "${API_HEADER}" \
-		"${URI}/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
-	REBASEABLE=$(echo "$pr_resp" | jq -r .rebaseable)
-	if [[ "$REBASEABLE" == "null" ]]; then
-		echo "The PR is not ready to rebase, retry after $RETRY_INTERVAL seconds"
-		sleep $RETRY_INTERVAL
-		continue
-	else
-		break
-	fi
-done
-
-if [[ "$REBASEABLE" != "true" ]] ; then
-	echo "GitHub doesn't think that the PR is rebaseable!"
+if [[ -z "$INPUT_PR_NUMBER" ]]; then
+	echo "Please set the pr_number input variable."
 	exit 1
 fi
+
+pr_resp=$(curl -X GET -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
+		"https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
+CAN_REBASE=$(echo "$pr_resp" | jq -r .rebaseable)
+
+if [[ "$CAN_REBASE" == "null" ]]; then
+	echo "GitHub thinks PR cannot rebase yet, will retry again in 5 seconds"
+	sleep 5
+	pr_resp=$(curl -X GET -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
+		"https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
+	CAN_REBASE=$(echo "$pr_resp" | jq -r .rebaseable)
+	if [[ "$CAN_REBASE" == "null" ]]; then
+		echo "Cannot rebase PR!"
+		exit 1
+
 
 BASE_REPO=$(echo "$pr_resp" | jq -r .base.repo.full_name)
 BASE_BRANCH=$(echo "$pr_resp" | jq -r .base.ref)
-
 USER_LOGIN=$(jq -r ".comment.user.login" "$GITHUB_EVENT_PATH")
           
 if [[ "$USER_LOGIN" == "null" ]]; then
 	USER_LOGIN=$(jq -r ".pull_request.user.login" "$GITHUB_EVENT_PATH")
 fi
 
-user_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "${API_HEADER}" \
+user_resp=$(curl -X GET -s -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" \
 	"${URI}/users/${USER_LOGIN}")
 
 USER_NAME=$(echo "$user_resp" | jq -r ".name")
@@ -70,9 +63,7 @@ USER_TOKEN=${USER_LOGIN//-/_}_TOKEN
 UNTRIMMED_COMMITTER_TOKEN=${!USER_TOKEN:-$GITHUB_TOKEN}
 COMMITTER_TOKEN="$(echo -e "${UNTRIMMED_COMMITTER_TOKEN}" | tr -d '[:space:]')"
 
-# See https://github.com/actions/checkout/issues/766 for motivation.
 git config --global --add safe.directory /github/workspace
-
 git remote set-url origin https://x-access-token:$COMMITTER_TOKEN@github.com/$GITHUB_REPOSITORY.git
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
@@ -81,11 +72,9 @@ git remote add fork https://x-access-token:$COMMITTER_TOKEN@github.com/$HEAD_REP
 
 set -o xtrace
 
-# make sure branches are up-to-date
 git fetch origin $BASE_BRANCH
 git fetch fork $HEAD_BRANCH
 
-# do the rebase
 git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
 if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
 	GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/$BASE_BRANCH
@@ -93,7 +82,6 @@ else
 	git rebase origin/$BASE_BRANCH
 fi
 
-# push back
 git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 
 git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH

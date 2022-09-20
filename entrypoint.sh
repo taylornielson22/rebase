@@ -9,11 +9,11 @@ fi
 
 AUTH_HEADER="Authorization: token $GITHUB_TOKEN"
 CAN_REBASE=""
-pr_resp=""
+pr_response=""
 for ((i = 0 ; i < 3 ; i++)); do
-	pr_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "Accept: application/vnd.github.v3+json" \
+	pr_response=$(curl -X GET -s -H "${AUTH_HEADER}" -H "Accept: application/vnd.github.v3+json" \
 		"https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$INPUT_PR_NUMBER")
-	CAN_REBASE=$(echo "$pr_resp" | jq -r .rebaseable)
+	CAN_REBASE=$(echo "$pr_response" | jq -r .rebaseable)
 	if [[ "$CAN_REBASE" != "null" ]]; then
 		break
 	fi
@@ -25,8 +25,8 @@ if [[ "$CAN_REBASE" != "true" ]] ; then
 	echo "PR cannot rebase!"
 fi
 
-BASE_REPO=$(echo "$pr_resp" | jq -r .base.repo.full_name)
-BASE_BRANCH=$(echo "$pr_resp" | jq -r .base.ref)
+BASE_REPO=$(echo "$pr_response" | jq -r .base.repo.full_name)
+BASE_BRANCH=$(echo "$pr_response" | jq -r .base.ref)
 USER_LOGIN=$(jq -r ".comment.user.login" "$GITHUB_EVENT_PATH")
           
 if [[ "$USER_LOGIN" == "null" ]]; then
@@ -52,10 +52,10 @@ if [[ -z "$BASE_BRANCH" ]]; then
 	exit 1
 fi
 
-HEAD_REPO=$(echo "$pr_resp" | jq -r .head.repo.full_name)
-HEAD_BRANCH=$(echo "$pr_resp" | jq -r .head.ref)
+HEAD_REPO=$(echo "$pr_response" | jq -r .head.repo.full_name)
+HEAD_BRANCH=$(echo "$pr_response" | jq -r .head.ref)
 
-echo "Base branch for PR #$INPUT_PR_NUMBER is $BASE_BRANCH"
+echo "$BASE_BRANCH is Base branch for PR #$INPUT_PR_NUMBER"
 
 USER_TOKEN=${USER_LOGIN//-/_}_TOKEN
 UNTRIMMED_COMMITTER_TOKEN=${!USER_TOKEN:-$GITHUB_TOKEN}
@@ -65,6 +65,9 @@ git config --global --add safe.directory /github/workspace
 git remote set-url origin https://x-access-token:$COMMITTER_TOKEN@github.com/$GITHUB_REPOSITORY.git
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
+
+echo "Git Username: $USER_NAME"
+echo "Git Email: $USER_EMAIL"
 
 git remote add fork https://x-access-token:$COMMITTER_TOKEN@github.com/$HEAD_REPO.git
 

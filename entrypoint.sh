@@ -63,6 +63,7 @@ git fetch origin $BASE_BRANCH
 git fetch fork $HEAD_BRANCH
 
 git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
+git push --force-with-lease fork origin/$HEAD_BRANCH:$HEAD_BRANCH
 if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
 	GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/$BASE_BRANCH
 else

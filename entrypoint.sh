@@ -27,35 +27,24 @@ fi
 
 BASE_REPO=$(echo "$pr_response" | jq -r .base.repo.full_name)
 BASE_BRANCH=$(echo "$pr_response" | jq -r .base.ref)
-USER_LOGIN=$(jq -r ".comment.user.login" "$GITHUB_EVENT_PATH")
-          
-if [[ "$USER_LOGIN" == "null" ]]; then
-	USER_LOGIN=$(jq -r ".pull_request.user.login" "$GITHUB_EVENT_PATH")
-fi
-
-user_resp=$(curl -X GET -s -H "${AUTH_HEADER}" -H "Accept: application/vnd.github.v3+json" \
-	"https://api.github.com/users/${USER_LOGIN}")
-
-USER_NAME=$(echo "$user_resp" | jq -r ".name")
-if [[ "$USER_NAME" == "null" ]]; then
-	USER_NAME=$USER_LOGIN
-fi
-USER_NAME="${USER_NAME} (Rebase PR Action)"
-
-USER_EMAIL=$(echo "$user_resp" | jq -r ".email")
-if [[ "$USER_EMAIL" == "null" ]]; then
-	USER_EMAIL="$USER_LOGIN@users.noreply.github.com"
-fi
-
+echo "$BASE_BRANCH is Base branch for PR #$INPUT_PR_NUMBER"
 if [[ -z "$BASE_BRANCH" ]]; then
 	echo "Cannot get base branch information for PR #$INPUT_PR_NUMBER!"
 	exit 1
 fi
 
+USER_LOGIN=$(jq -r ".comment.user.login" "$GITHUB_EVENT_PATH")         
+if [[ "$USER_LOGIN" == "null" ]]; then
+	USER_LOGIN=$(jq -r ".pull_request.user.login" "$GITHUB_EVENT_PATH")
+fi
+
+USER_NAME="${USER_LOGIN} (Automatic Rebase PR Action)"
+USER_EMAIL="$USER_LOGIN@users.noreply.github.com"
+echo "Automatic Rebase using Git Username: $USER_NAME"
+echo "Automatic Rebase using Git Email: $USER_EMAIL"
+
 HEAD_REPO=$(echo "$pr_response" | jq -r .head.repo.full_name)
 HEAD_BRANCH=$(echo "$pr_response" | jq -r .head.ref)
-
-echo "$BASE_BRANCH is Base branch for PR #$INPUT_PR_NUMBER"
 
 USER_TOKEN=${USER_LOGIN//-/_}_TOKEN
 UNTRIMMED_COMMITTER_TOKEN=${!USER_TOKEN:-$GITHUB_TOKEN}
@@ -65,9 +54,6 @@ git config --global --add safe.directory /github/workspace
 git remote set-url origin https://x-access-token:$COMMITTER_TOKEN@github.com/$GITHUB_REPOSITORY.git
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
-
-echo "Git Username: $USER_NAME"
-echo "Git Email: $USER_EMAIL"
 
 git remote add fork https://x-access-token:$COMMITTER_TOKEN@github.com/$HEAD_REPO.git
 
@@ -82,8 +68,6 @@ if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
 else
 	git rebase origin/$BASE_BRANCH
 fi
-
-git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 
 git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
 git merge fork/$HEAD_BRANCH

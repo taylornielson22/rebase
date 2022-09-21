@@ -76,5 +76,6 @@ fi
 if [[ "$INPUT_MERGE" == "true" ]]; then
 	git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
 	git merge fork/$HEAD_BRANCH 
+	git commit --amend -m "Automatic Merge $HEAD_BRANCH into $BASE_BRANCH"
 	git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
 fi

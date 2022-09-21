@@ -65,9 +65,11 @@ git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
 
 if [[ "$INPUT_REBASE" == "true" ]]; then
 	git rebase origin/$BASE_BRANCH
-	git reset origin/$BASE_BRANCH
-	git add -A
-	git commit -m "$INPUT_SQUASH_COMMIT"
+	if [[ ! -z "$INPUT_SQUASH_COMMIT" ]]; then
+		git reset origin/$BASE_BRANCH
+		git add -A
+		git commit -m "$INPUT_SQUASH_COMMIT"
+	fi
 	git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 fi
 

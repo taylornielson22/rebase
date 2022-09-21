@@ -64,13 +64,10 @@ git fetch fork $HEAD_BRANCH
 git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
 
 if [[ "$INPUT_REBASE" == "true" ]]; then
-	if [[  ! -z "$SQUASH_COMMIT" ]]; then
-		git reset origin/$BASE_BRANCH
-		git add -A
-		git commit -m $SQUASH_COMMIT
-	else
-		git rebase origin/$BASE_BRANCH
-	fi
+	git rebase origin/$BASE_BRANCH
+	git reset origin/$BASE_BRANCH
+	git add -A
+	git commit -m $SQUASH_COMMIT
 	git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 fi
 

@@ -2,9 +2,8 @@ name: Automatic Rebase
 maintainer: EIG
 inputs:
   squash_commit:
-    description: Should the rebase autosquash fixup and squash commits
+    description: optional squash commit message when rebased
     required: false
-    default: false
   rebase:
     description: Should rebase head onto base branch
     required: false

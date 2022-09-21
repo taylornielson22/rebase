@@ -71,8 +71,6 @@ fi
 
 git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 
-if [[ $INPUT_REBASE_ONLY -eq 'false' ]]; then
-	git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
-	git merge fork/$HEAD_BRANCH
-	git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
-fi
+git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
+git merge fork/$HEAD_BRANCH
+git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH

@@ -64,8 +64,10 @@ git fetch fork $HEAD_BRANCH
 git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
 
 if [[ "$INPUT_REBASE" == "true" ]]; then
-	if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
-		GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/$BASE_BRANCH
+	if [[  ! -z "$SQUASH_COMMIT" ]]; then
+		git reset origin/$BASE_BRANCH
+		git add -A
+		git commit -m $SQUASH_COMMIT
 	else
 		git rebase origin/$BASE_BRANCH
 	fi

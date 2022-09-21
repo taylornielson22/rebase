@@ -1,7 +1,7 @@
 name: Automatic Rebase
 maintainer: EIG
 inputs:
-  autosquash:
+  squash_commit:
     description: Should the rebase autosquash fixup and squash commits
     required: false
     default: false

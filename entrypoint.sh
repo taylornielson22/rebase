@@ -67,7 +67,7 @@ if [[ "$INPUT_REBASE" == "true" ]]; then
 	git rebase origin/$BASE_BRANCH
 	git reset origin/$BASE_BRANCH
 	git add -A
-	git commit -m $SQUASH_COMMIT
+	git commit -m "$SQUASH_COMMIT"
 	git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 fi
 

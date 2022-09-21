@@ -61,16 +61,19 @@ set -o xtrace
 
 git fetch origin $BASE_BRANCH
 git fetch fork $HEAD_BRANCH
-
 git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
-if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
-	GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/$BASE_BRANCH
-else
-	git rebase origin/$BASE_BRANCH
+
+if [[ $INPUT_REBASE -eq 'true' ]]; then
+	if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
+		GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/$BASE_BRANCH
+	else
+		git rebase origin/$BASE_BRANCH
+	fi
+	git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 fi
 
-git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
-
-git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
-git merge fork/$HEAD_BRANCH
-git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
+if [[ $INPUT_MERGE -eq 'true' ]]; then
+	git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
+	git merge fork/$HEAD_BRANCH
+	git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
+fi

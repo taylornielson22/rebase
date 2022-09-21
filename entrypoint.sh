@@ -75,6 +75,6 @@ fi
 
 if [[ "$INPUT_MERGE" == "true" ]]; then
 	git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
-	git merge fork/$HEAD_BRANCH --no-commit
+	git merge --ff-only --no-commit fork/$HEAD_BRANCH 
 	git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
 fi

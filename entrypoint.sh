@@ -63,7 +63,7 @@ git fetch origin $BASE_BRANCH
 git fetch fork $HEAD_BRANCH
 git checkout -b fork/$HEAD_BRANCH fork/$HEAD_BRANCH
 
-if [[ $INPUT_REBASE -eq 'true' ]]; then
+if [[ $INPUT_REBASE ]]; then
 	if [[ $INPUT_AUTOSQUASH -eq 'true' ]]; then
 		GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash origin/$BASE_BRANCH
 	else
@@ -72,8 +72,8 @@ if [[ $INPUT_REBASE -eq 'true' ]]; then
 	git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 fi
 
-if [[ $INPUT_MERGE -eq 'true' ]]; then
+if [[ $INPUT_MERGE ]]; then
 	git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
-	git merge fork/$HEAD_BRANCH
+	git merge fork/$HEAD_BRANCH --no-commit
 	git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
 fi

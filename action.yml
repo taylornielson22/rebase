@@ -5,6 +5,14 @@ inputs:
     description: Should the rebase autosquash fixup and squash commits
     required: false
     default: false
+  only_rebase:
+    description: Should only rebase and not merge into base branch
+    required: false
+    default: false
+  only_merge:
+    description: Should only merge head into base branch
+    required: false
+    default: false
   pr_number:
     required: true
     description: PR number

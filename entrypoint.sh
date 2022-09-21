@@ -47,15 +47,15 @@ HEAD_REPO=$(echo "$pr_response" | jq -r .head.repo.full_name)
 HEAD_BRANCH=$(echo "$pr_response" | jq -r .head.ref)
 
 USER_TOKEN=${USER_LOGIN//-/_}_TOKEN
-UNTRIMMED_COMMITTER_TOKEN=${!USER_TOKEN:-$GITHUB_TOKEN}
-COMMITTER_TOKEN="$(echo -e "${UNTRIMMED_COMMITTER_TOKEN}" | tr -d '[:space:]')"
+COMMIT_TOKEN=${!USER_TOKEN:-$GITHUB_TOKEN}
+COMMIT_TOKEN="$(echo -e "${COMMIT_TOKEN_TOKEN}" | tr -d '[:space:]')"
 
 git config --global --add safe.directory /github/workspace
-git remote set-url origin https://x-access-token:$COMMITTER_TOKEN@github.com/$GITHUB_REPOSITORY.git
+git remote set-url origin https://x-access-token:$COMMIT_TOKEN@github.com/$GITHUB_REPOSITORY.git
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
 
-git remote add fork https://x-access-token:$COMMITTER_TOKEN@github.com/$HEAD_REPO.git
+git remote add fork https://x-access-token:$COMMIT_TOKEN@github.com/$HEAD_REPO.git
 
 set -o xtrace
 
@@ -69,9 +69,10 @@ else
 	git rebase origin/$BASE_BRANCH
 fi
 
-git push --force-with-lease fork origin/$HEAD_BRANCH:$HEAD_BRANCH
-git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
-git merge fork/$HEAD_BRANCH
-git fetch
-git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
+git push --force-with-lease fork fork/$HEAD_BRANCH:$HEAD_BRANCH
 
+if [[ $INPUT_REBASE_ONLY -eq 'false' ]]; then
+	git checkout -b origin/$BASE_BRANCH origin/$BASE_BRANCH
+	git merge fork/$HEAD_BRANCH
+	git push --force-with-lease origin origin/$BASE_BRANCH:$BASE_BRANCH
+fi
